@@ -5,15 +5,31 @@ import math
 
 with open('data.txt', 'r') as myfile:			##Read a file
     data=myfile.read()
-data_words=Counter(nltk.word_tokenize(data))
+data_words=Counter(nltk.word_tokenize(data)) ##Dictionary of the number that the words repeat themselfs in the Doc
 data_token=nltk.sent_tokenize(data)	##Split the sentences
 
-Dic=defaultdict(list)
+DicDocument=defaultdict(list)
+DicSentence=defaultdict(list)
 
-for key, value in data_words.iteritems(): 			#freq.iteritems():		## Iterate and put it in a list
-	word_frequency=0
-	for o in data_token:
-		if key in o:
-			word_frequency=word_frequency+1
+###################################################################################################
+count=0	
+###################################################################################################	
+				##get the frequency of each word in its sentence
+					#Number the sentences
 
-	Dic[key].append(math.log(len(data_token)/word_frequency))
+for a in data_token:
+	dic_toadd=defaultdict(list)
+	aux_list=Counter(nltk.word_tokenize(a))
+
+	for key,value in aux_list.iteritems():
+		dic_toadd[key].append(math.log(len(data)/aux_list.get(key)))
+	DicSentence[count].append(dic_toadd)
+	count=count+1
+
+for key, value in data_words.iteritems(): 			#		## Iterate and put it in a list	
+	DicDocument[key].append(math.log(len(data)/value))
+
+
+#print data_words
+print DicSentence
+print DicDocument
