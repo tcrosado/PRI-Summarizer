@@ -1,7 +1,7 @@
 import nltk
 nltk.download('punkt')
 from collections import defaultdict, Counter
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
 with open('data.txt', 'r') as myfile:			##Read a file
     data=myfile.read().lower()
@@ -18,3 +18,10 @@ for key, value in word_list.iteritems():
 vec = CountVectorizer(vocabulary=final_list)
 data = vec.fit_transform(data_token).toarray()
 print data										####### creates a matrix where it put the number of times the words repeat of a a vocabulary wich in our case is the full doc
+
+
+######idf wow
+transformer = TfidfTransformer(smooth_idf=True)
+tfidf = transformer.fit_transform(data).toarray()
+
+print tfidf
