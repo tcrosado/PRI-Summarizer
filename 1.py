@@ -1,10 +1,14 @@
+## ALL wrong maybe we can use some of these code later on####
+
+
 import nltk
 nltk.download('punkt')
 from collections import defaultdict, Counter
 import math
+#import sklearn
 
 with open('data.txt', 'r') as myfile:			##Read a file
-    data=myfile.read()
+    data=myfile.read().lower()
 data_words=Counter(nltk.word_tokenize(data)) ##Dictionary of the number that the words repeat themselfs in the Doc
 data_token=nltk.sent_tokenize(data)	##Split the sentences
 
@@ -33,3 +37,6 @@ for key, value in data_words.iteritems(): 			#		## Iterate and put it in a list
 #print data_words
 print DicSentence
 print DicDocument
+
+###############################################################################################3
+#sklearn.metrics.pairwise.cosine_similarity
