@@ -5,7 +5,6 @@ import nltk
 nltk.download('punkt')
 from collections import defaultdict, Counter
 import math
-#import sklearn
 
 with open('data.txt', 'r') as myfile:			##Read a file
     data=myfile.read().lower()
