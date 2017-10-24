@@ -11,9 +11,13 @@ with open('data.txt', 'r') as myfile:			##Read a file
 
 data_words=Counter(nltk.word_tokenize(data)) ##Dictionary of the number that the words repeat themselfs in the Doc
 data_token=nltk.sent_tokenize(data)	##Split the sentences
+final=[]
+final.append(data_words)
+for a in data_token:
+	final.append(Counter(nltk.word_tokenize(a)))
 
 vec = DictVectorizer()
-vec.fit_transform(data_words).toarray()
+vec.fit_transform(final).toarray()
 
 #vectorizer = TfidfVectorizer( use_idf=True )
 #trainvec = vectorizer.fit_transform(myfile)
