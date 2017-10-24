@@ -3,26 +3,21 @@ from sklearn.feature_extraction import DictVectorizer
 import nltk
 nltk.download('punkt')
 from collections import defaultdict, Counter
-
+from sklearn.feature_extraction.text import CountVectorizer
+import chardet
 
 with open('data.txt', 'r') as myfile:			##Read a file
     data=myfile.read().lower()
 
 
-data_words=Counter(nltk.word_tokenize(data)) ##Dictionary of the number that the words repeat themselfs in the Doc
+#data_words=Counter(nltk.word_tokenize(data)) ##Dictionary of the number that the words repeat themselfs in the Doc
+data_words = nltk.word_tokenize(data)
 data_token=nltk.sent_tokenize(data)	##Split the sentences
-final=[]
-final.append(data_words)
-for a in data_token:
-	final.append(Counter(nltk.word_tokenize(a)))
 
-vec = DictVectorizer()
-vec.fit_transform(final).toarray()
-
-#vectorizer = TfidfVectorizer( use_idf=True )
-#trainvec = vectorizer.fit_transform(myfile)
-#testvec = vectorizer.transform(test.data)
-
-print vec.get_feature_names()
-
-#not sure what I'm doing here
+final_list=[]
+word_list=Counter(nltk.word_tokenize(data))
+for key, value in word_list.iteritems():
+	final_list.append(key)
+vec = CountVectorizer(vocabulary=final_list)
+data = vec.fit_transform(data_token).toarray()
+print data  										####### creates a matrix where it put the number of times the words repeat of a a vocabulary wich in our case is the full doc
