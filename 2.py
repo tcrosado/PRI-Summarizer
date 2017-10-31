@@ -3,7 +3,24 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.datasets import load_files
 import operator
-files = load_files("../TeMario/")
+import re
+
+
+
+def getFilename(fullPath):
+    fileName = re.findall(r"/Text/(.*?)\.txt",fullPath)
+    if(fileName != []):
+        return fileName[0]
+    else:
+        return ""
+
+
+
+
+
+pathFiles = "../TeMario/"
+pathExpectedFiles = "../idealTeMario/"
+files = load_files(pathFiles)
 
 enc_PT = 'ISO-8859-15'
 enc_US = 'UTF-8'
@@ -15,46 +32,81 @@ vectorSpace = TfidfVectorizer(encoding=enc)
 resultCollection = vectorSpace.fit_transform(files.data)
 #print(files.data)
 sentences = []
-scoreSentences = []
+scoreSentences = dict()
 
 for file in files.filenames:
-	f = open(file, 'r', encoding=enc)
-	document = f.read()
-	# Turn into sentences
-	sentencesDocument = sent_tokenize(document)
+    fileName = getFilename(file)
 
-	#Little hack
-	if len(sentencesDocument)==0:
-		continue
+    f = open(file, 'r', encoding=enc)
+    document = f.read()
+    # Turn into sentences
+    sentencesDocument = sent_tokenize(document)
 
-	sentences += sentencesDocument
+    sentences += sentencesDocument
 	#TFIDF in each sentence
-	resultSentence = vectorSpace.transform(sentencesDocument)
+    resultSentence = vectorSpace.transform(sentencesDocument)
+
+    scores = []
+    for i in range(0,len(sentencesDocument)):
+        scoreSentences[(fileName,i)]=cosine_similarity(resultSentence[i:i+1],resultCollection)[0]
+
+print(len(scoreSentences))
 
 
 
-	for i in range(0,len(sentencesDocument)):
-			scoreSentences.append(cosine_similarity(resultSentence[i:i+1],resultCollection))
+for position in scoreSentences.keys():
 
-for i in range(len(files.filenames)):
+    nameFile = pathFiles+"/Text/"+fileName + '.out'
 
-	scoreDoc = dict(zip(sentences, scoreSentences[i][0]))
-	sortedScore = sorted(scoreDoc.items(),key=operator.itemgetter(1),reverse=True)
+    sortedScore = sorted(scoreSentences.items(),key=operator.itemgetter(1),reverse=True)
 
+    print(sortedScore)
+
+'''
+    keySentenceIDF = sortedScore[0:5]
+    keySentences = sorted(keySentenceIDF)
+
+
+
+
+
+
+
+
+
+
+    scoreDoc = dict(zip(sentences, scoreSentences))
+    print(scoreDoc)
+    sortedScore = sorted(scoreDoc.items(),key=operator.itemgetter(1),reverse=True)
+    sortedScore.add
 	#######################################################################################
 	#######################################################################################
-	keySentenceIDF = sortedScore[0:5]
+    keySentenceIDF = sortedScore[0:5]
 	# Order sentence by apperence in document
-	keySentences = sorted(keySentenceIDF)
+    keySentences = sorted(keySentenceIDF)
 
-	nameFile = files.filenames[i] + '.out'
+    output = open(nameFile, 'w', encoding=enc)
 
-	output = open(nameFile, 'w', encoding=enc)
+    for key in keySentences:
+        output.write(key[0])
 
-	for key in keySentences:
-		#print(key)
-		#print(sentences[key[0]])
-		#output.write(sentences[key[0]])
-		output.write(key[0])
+    output.close()
 
-	output.close()
+
+
+for file in files.filenames:
+    filename = getFilename(file)
+    if filename == "":
+        continue
+
+    output = open(pathFiles+"Text/"+filename+".out",'r', encoding=enc)
+    outputResult = output.read()
+    expected = open(pathExpectedFiles+"Ext-"+filename+".txt",'r', encoding=enc)
+    expectedResult = expected.readlines()
+    print("R####################")
+    print(sent_tokenize(outputResult))
+    print("E------------------------------")
+    print(expectedResult)
+    output.close()
+    expected.close()
+'''
