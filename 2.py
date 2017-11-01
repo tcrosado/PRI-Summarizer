@@ -49,7 +49,7 @@ def calculateAveragePrecision(index,precisionList,relevanceList):
 
 
 def calculateMAP(averagePrecisionList):
-	return numpy.mean()
+	return numpy.mean(averagePrecisionList)
 
 
 
@@ -124,9 +124,10 @@ for fileName in scoreFileSentences.keys():
 
 	expected = open(pathExpectedFiles+"Ext-"+fileName+".txt",'r', encoding=enc)
 	expectedResult = expected.readlines()
-	expectedSentences = []
+	
 
 	#removing newlines for better results
+	expectedSentences = []
 	for line in expectedResult:
 		expectedSentences += [line[:-1]]
 
@@ -136,22 +137,23 @@ for fileName in scoreFileSentences.keys():
 	recallResult = recall(expectedSentences,outputSentences)
 	precisionResult = precision(expectedSentences,outputSentences)
 	precisionList+=[precisionResult]
-	
+
 	#Not sure if relevanceList is necessary here
 	if precisionResult != 0:
 		relevanceList+=[1]
 	else:
 		relevanceList+=[0]
 
-	print("#")
-	print("file: ",fileName)
-	print("recall: ",recallResult)
-	print("precision: ",precisionResult)
+	resultString = "File: "+fileName+" Recall: "+str(recallResult)+" Precision: "+str(precisionResult)
 	if recallResult != 0 and precisionResult != 0:
-		print("F1 Score: ",calculateF1score(precisionResult,recallResult))
+		f1Score = calculateF1score(precisionResult,recallResult)
+		resultString += " F1 Score: "+str(f1Score)
+	
+	print(resultString)
+	
 
 avgPrecision = calculateAveragePrecision(len(precisionList),precisionList,relevanceList)
-print(avgPrecision)
+print("Average Precision: "+str(avgPrecision))
 
 #Clean Up
 os.system("rm "+pathFiles+"Text/*.out")
