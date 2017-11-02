@@ -7,12 +7,25 @@ import operator
 import re
 import os
 
+pathFiles = "../TeMario/"
+pathExpectedFiles = "../idealTeMario/"
+
+enc_PT = 'ISO-8859-15'
+enc_US = 'UTF-8'
+enc = enc_PT
+
+
+
 def getFilename(fullPath):
 	fileName = re.findall(r"/Text/(.*?)\.txt",fullPath)
 	if(fileName != []):
 		return fileName[0]
 	else:
 		return ""
+
+def getOutputFilePath(fileName):
+    return pathFiles+"Text/"+fileName + '.out'
+
 
 def getNthMaxScores(n,scores):
 	result = []
@@ -28,7 +41,7 @@ def selectNthBestLines(n,fileName,allFileScores,scoreFileSentences):
 	fileMaxScores = getNthMaxScores(5,allFileScores[fileName])
 
 	lineScores = scoreFileSentences[fileName]
-	selectedLines = [] 
+	selectedLines = []
 	for lineNumber in lineScores.keys():
 		lineMaxScore = max(lineScores[lineNumber])
 		if lineMaxScore  in fileMaxScores:
@@ -37,7 +50,7 @@ def selectNthBestLines(n,fileName,allFileScores,scoreFileSentences):
 				selectedLines.append(lineNumber)
 
 	return sorted(selectedLines)
-	
+
 
 def calculateF1score(precision,recall):
 	return 2 * (precision * recall) / (precision + recall)
@@ -52,23 +65,50 @@ def calculateMAP(averagePrecisionList):
 	return numpy.mean(averagePrecisionList)
 
 
+def getMetrics(resultPath,expectedPath):
+    output = open(resultPath,'r', encoding=enc)
+    outputResult = output.read()
+    outputSentences = set(sent_tokenize(outputResult))
+    output.close()
+
+    expected = open(expectedPath,'r', encoding=enc)
+    expectedResult = expected.readlines()
 
 
-pathFiles = "../TeMario/"
-pathExpectedFiles = "../idealTeMario/"
+    #removing newlines for better results
+    expectedSentences = []
+    for line in expectedResult:
+        expectedSentences += [line[:-1]]
+
+    expectedSentences = set(expectedSentences)
+    expected.close()
+
+    recallResult = recall(expectedSentences,outputSentences)
+    precisionResult = precision(expectedSentences,outputSentences)
+
+    resultString = "File: "+fileName+" Recall: "+str(recallResult)+" Precision: "+str(precisionResult)
+    if recallResult != 0 and precisionResult != 0:
+        f1Score = calculateF1score(precisionResult,recallResult)
+        resultString += " F1 Score: "+str(f1Score)
+
+    print(resultString)
+
+    return {"recall" : recallResult,"precision" : precisionResult,"relevance": 0 if precisionResult!=0 else 1}
+
+
+
+
+
+
+
 files = load_files(pathFiles)
-
-enc_PT = 'ISO-8859-15'
-enc_US = 'UTF-8'
-enc = enc_PT
-
 
 #TFIDF in collection
 vectorSpace = TfidfVectorizer(encoding=enc)
 resultCollection = vectorSpace.fit_transform(files.data)
 
 sentences = dict()
-scoreFileSentences = dict()
+scoreFileSentences = dict() # cant put in function
 allFileScores = dict()
 for file in files.filenames:
 	fileName = getFilename(file)
@@ -77,10 +117,10 @@ for file in files.filenames:
 	document = f.read()
 	# Turn into sentences
 	sentences[fileName] = sent_tokenize(document)
-	
+
 	# Parse Title as sentence
 	firstSentence = sentences[fileName][0]
-	sentences[fileName].remove(firstSentence) 
+	sentences[fileName].remove(firstSentence)
 
 	sentences[fileName] = firstSentence.split("\n") + sentences[fileName]
 
@@ -96,61 +136,40 @@ for file in files.filenames:
 	scoreFileSentences[fileName] = lineScores
 	allFileScores[fileName] = allSentenceScores
 
-
-
 # Saving summaries
 for fileName in scoreFileSentences.keys():
-	
+
 	selectedLines = selectNthBestLines(5,fileName,allFileScores,scoreFileSentences)
 
-	filePath = pathFiles+"Text/"+fileName + '.out'
+	filePath = getOutputFilePath(fileName)
 	output = open(filePath, 'w', encoding=enc)
 
 	for lineNumber in selectedLines:
 		#needs new line so nltk can split sentences correctly
 		output.write(sentences[fileName][lineNumber]+"\n")
-	
+
 	output.close()
 
-# Precision, recall, F1 score and MAP calculations 
+
+
+
+
+
+
+# Precision, recall, F1 score and MAP calculations
 
 precisionList = []
 relevanceList = []
+# Chage ScoreFileSenetences to file.filename or list of filenames
 for fileName in scoreFileSentences.keys():
-	output = open(pathFiles+"Text/"+fileName+".out",'r', encoding=enc)
-	outputResult = output.read()
-	outputSentences = set(sent_tokenize(outputResult))
-	output.close()
+    expectedFilePath = pathExpectedFiles+"Ext-"+fileName+".txt"
+    resultFilePath = getOutputFilePath(fileName)
 
-	expected = open(pathExpectedFiles+"Ext-"+fileName+".txt",'r', encoding=enc)
-	expectedResult = expected.readlines()
-	
+    result = getMetrics(expectedFilePath, resultFilePath)
 
-	#removing newlines for better results
-	expectedSentences = []
-	for line in expectedResult:
-		expectedSentences += [line[:-1]]
+    precisionList += [result["precision"]]
+    relevanceList += [result["relevance"]]
 
-	expectedSentences = set(expectedSentences)
-	expected.close()
-	
-	recallResult = recall(expectedSentences,outputSentences)
-	precisionResult = precision(expectedSentences,outputSentences)
-	precisionList+=[precisionResult]
-
-	#Not sure if relevanceList is necessary here
-	if precisionResult != 0:
-		relevanceList+=[1]
-	else:
-		relevanceList+=[0]
-
-	resultString = "File: "+fileName+" Recall: "+str(recallResult)+" Precision: "+str(precisionResult)
-	if recallResult != 0 and precisionResult != 0:
-		f1Score = calculateF1score(precisionResult,recallResult)
-		resultString += " F1 Score: "+str(f1Score)
-	
-	print(resultString)
-	
 
 avgPrecision = calculateAveragePrecision(len(precisionList),precisionList,relevanceList)
 print("Average Precision: "+str(avgPrecision))
