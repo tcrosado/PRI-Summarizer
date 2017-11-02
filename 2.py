@@ -26,6 +26,9 @@ def getFilename(fullPath):
 def getOutputFilePath(fileName):
     return pathFiles+"Text/"+fileName + '.out'
 
+def getExpectedFilePath(fileName):
+    return pathExpectedFiles+"Ext-"+fileName+".txt"
+
 
 def getNthMaxScores(n,scores):
 	result = []
@@ -50,6 +53,58 @@ def selectNthBestLines(n,fileName,allFileScores,scoreFileSentences):
 				selectedLines.append(lineNumber)
 
 	return sorted(selectedLines)
+
+
+def getDocumentBasedSummary(vectorSpace,files,nrSummarySentences):
+
+    #TFIDF in collection
+    resultCollection = vectorSpace.fit_transform(files.data)
+
+    sentences = dict()
+    scoreFileSentences = dict() # cant put in function
+    allFileScores = dict()
+    for file in files.filenames:
+        fileName = getFilename(file)
+        f = open(file, 'r', encoding=enc)
+        document = f.read()
+        # Turn into sentences
+        sentences[fileName] = sent_tokenize(document)
+
+        # Parse Title as sentence
+        firstSentence = sentences[fileName][0]
+        sentences[fileName].remove(firstSentence)
+
+        sentences[fileName] = firstSentence.split("\n") + sentences[fileName]
+
+        #TFIDF in each sentence
+        resultSentence = vectorSpace.transform(sentences[fileName])
+
+        lineScores = dict()
+        allSentenceScores = []
+        for i in range(len(sentences[fileName])):
+            similarity = cosine_similarity(resultSentence[i:i+1],resultCollection)[0]
+            allSentenceScores += list(similarity)
+            lineScores[i] = similarity
+        scoreFileSentences[fileName] = lineScores
+        allFileScores[fileName] = allSentenceScores
+
+
+    summaries = dict()
+    for fileName in scoreFileSentences.keys():
+
+        selectedLines = selectNthBestLines(nrSummarySentences,fileName,allFileScores,scoreFileSentences)
+        filePath = getOutputFilePath(fileName)
+
+        summary = []
+        for lineNumber in selectedLines:
+            summary.append(sentences[fileName][lineNumber]+"\n")
+
+        summaries[fileName]=tuple(summary)
+
+    return summaries
+
+
+
 
 
 def calculateF1score(precision,recall):
@@ -93,66 +148,26 @@ def getMetrics(resultPath,expectedPath):
 
     print(resultString)
 
-    return {"recall" : recallResult,"precision" : precisionResult,"relevance": 0 if precisionResult!=0 else 1}
+    return {"recall" : recallResult,"precision" : precisionResult,"relevance": 1 if precisionResult!=0 else 0}
 
 
 
 
 
 
+#cenas
 
+#need file list
 files = load_files(pathFiles)
-
-#TFIDF in collection
 vectorSpace = TfidfVectorizer(encoding=enc)
-resultCollection = vectorSpace.fit_transform(files.data)
-
-sentences = dict()
-scoreFileSentences = dict() # cant put in function
-allFileScores = dict()
-for file in files.filenames:
-	fileName = getFilename(file)
-
-	f = open(file, 'r', encoding=enc)
-	document = f.read()
-	# Turn into sentences
-	sentences[fileName] = sent_tokenize(document)
-
-	# Parse Title as sentence
-	firstSentence = sentences[fileName][0]
-	sentences[fileName].remove(firstSentence)
-
-	sentences[fileName] = firstSentence.split("\n") + sentences[fileName]
-
-	#TFIDF in each sentence
-	resultSentence = vectorSpace.transform(sentences[fileName])
-
-	lineScores = dict()
-	allSentenceScores = []
-	for i in range(len(sentences[fileName])):
-		similarity = cosine_similarity(resultSentence[i:i+1],resultCollection)[0]
-		allSentenceScores += list(similarity)
-		lineScores[i] = similarity
-	scoreFileSentences[fileName] = lineScores
-	allFileScores[fileName] = allSentenceScores
-
-# Saving summaries
-for fileName in scoreFileSentences.keys():
-
-	selectedLines = selectNthBestLines(5,fileName,allFileScores,scoreFileSentences)
-
-	filePath = getOutputFilePath(fileName)
-	output = open(filePath, 'w', encoding=enc)
-
-	for lineNumber in selectedLines:
-		#needs new line so nltk can split sentences correctly
-		output.write(sentences[fileName][lineNumber]+"\n")
-
-	output.close()
+summary = getDocumentBasedSummary(vectorSpace,files,5)
 
 
-
-
+for filePath in files.filenames:
+    fileName = getFilename(filePath)
+    outputPath = getOutputFilePath(fileName)
+    with open(outputPath, 'w', encoding=enc) as file:
+        file.write("".join(summary[fileName]))
 
 
 
@@ -161,8 +176,10 @@ for fileName in scoreFileSentences.keys():
 precisionList = []
 relevanceList = []
 # Chage ScoreFileSenetences to file.filename or list of filenames
-for fileName in scoreFileSentences.keys():
-    expectedFilePath = pathExpectedFiles+"Ext-"+fileName+".txt"
+
+for filePath in files.filenames:
+    fileName = getFilename(filePath)
+    expectedFilePath = getExpectedFilePath(fileName)
     resultFilePath = getOutputFilePath(fileName)
 
     result = getMetrics(expectedFilePath, resultFilePath)
@@ -170,9 +187,8 @@ for fileName in scoreFileSentences.keys():
     precisionList += [result["precision"]]
     relevanceList += [result["relevance"]]
 
-
 avgPrecision = calculateAveragePrecision(len(precisionList),precisionList,relevanceList)
-print("Average Precision: "+str(avgPrecision))
+print("Average Precision: ",avgPrecision)
 
 #Clean Up
 os.system("rm "+pathFiles+"Text/*.out")
