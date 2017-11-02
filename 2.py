@@ -6,6 +6,8 @@ from sklearn.datasets import load_files
 import operator
 import re
 import os
+import numpy
+from Ex1Lib import getSenteceBasedSummary
 
 pathFiles = "../TeMario/"
 pathExpectedFiles = "../idealTeMario/"
@@ -55,7 +57,7 @@ def selectNthBestLines(n,fileName,allFileScores,scoreFileSentences):
 	return sorted(selectedLines)
 
 
-def getDocumentBasedSummary(vectorSpace,files,nrSummarySentences):
+def getDocumentBasedSummary(nrSummarySentences,vectorSpace,files):
 
     #TFIDF in collection
     resultCollection = vectorSpace.fit_transform(files.data)
@@ -152,43 +154,66 @@ def getMetrics(resultPath,expectedPath):
 
 
 
-
-
-
-#cenas
-
-#need file list
 files = load_files(pathFiles)
+
 vectorSpace = TfidfVectorizer(encoding=enc)
-summary = getDocumentBasedSummary(vectorSpace,files,5)
+summaryDocBased = getDocumentBasedSummary(5,vectorSpace,files)
 
 
 for filePath in files.filenames:
+
+    # Exporting Document based results to file
     fileName = getFilename(filePath)
-    outputPath = getOutputFilePath(fileName)
-    with open(outputPath, 'w', encoding=enc) as file:
-        file.write("".join(summary[fileName]))
+
+    outputDocPath = getOutputFilePath(fileName+"D")
+    with open(outputDocPath, 'w', encoding=enc) as file:
+        file.write("".join(summaryDocBased[fileName]))
+
+    #Sentence based approach
+    vectorSpace = TfidfVectorizer(encoding=enc)
+    summarySentenceBased = getSenteceBasedSummary(3,vectorSpace,filePath,enc)
+
+    # Exporting Sentence based results to file
+    outputSenPath = getOutputFilePath(fileName+"S")
+    with open(outputSenPath, 'w', encoding=enc) as file:
+        file.write("".join(summarySentenceBased))
+
 
 
 
 # Precision, recall, F1 score and MAP calculations
 
-precisionList = []
-relevanceList = []
-# Chage ScoreFileSenetences to file.filename or list of filenames
+precisionDocBased = []
+relevanceDocBased = []
+
+precisionSentBased = []
+relevanceSentBased = []
+
 
 for filePath in files.filenames:
     fileName = getFilename(filePath)
     expectedFilePath = getExpectedFilePath(fileName)
-    resultFilePath = getOutputFilePath(fileName)
 
-    result = getMetrics(expectedFilePath, resultFilePath)
+    #Metrics for Document Based approach
+    print("Document Based")
+    resultFilePath = getOutputFilePath(fileName+"D")
+    resultDocBased = getMetrics(resultFilePath,expectedFilePath)
 
-    precisionList += [result["precision"]]
-    relevanceList += [result["relevance"]]
 
-avgPrecision = calculateAveragePrecision(len(precisionList),precisionList,relevanceList)
-print("Average Precision: ",avgPrecision)
+    precisionDocBased += [resultDocBased["precision"]]
+    relevanceDocBased += [resultDocBased["relevance"]]
+
+    #Metrics for Sentece Based approach
+    print("Sentece Based")
+    resultFilePath = getOutputFilePath(fileName+"S")
+    resultSentBased = getMetrics(resultFilePath,expectedFilePath)
+
+    precisionSentBased += [resultSentBased["precision"]]
+    relevanceSentBased += [resultSentBased["relevance"]]
+
+avgPrecisionDocBased = calculateAveragePrecision(len(precisionDocBased),precisionDocBased,relevanceDocBased)
+avgPrecisionSentBased = calculateAveragePrecision(len(precisionSentBased),precisionSentBased,relevanceSentBased)
+print("Mean Average Precision: ",calculateMAP([avgPrecisionDocBased,avgPrecisionSentBased]))
 
 #Clean Up
 os.system("rm "+pathFiles+"Text/*.out")
