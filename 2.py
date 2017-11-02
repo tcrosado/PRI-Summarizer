@@ -23,8 +23,34 @@ def getNthMaxScores(n,scores):
 		scoreCopy.remove(maxNumber)
 	return result
 
+
+def selectNthBestLines(n,fileName,allFileScores,scoreFileSentences):
+	fileMaxScores = getNthMaxScores(5,allFileScores[fileName])
+
+	lineScores = scoreFileSentences[fileName]
+	selectedLines = [] 
+	for lineNumber in lineScores.keys():
+		lineMaxScore = max(lineScores[lineNumber])
+		if lineMaxScore  in fileMaxScores:
+			fileMaxScores.remove(lineMaxScore)
+			if lineNumber not in selectedLines:
+				selectedLines.append(lineNumber)
+
+	return sorted(selectedLines)
+	
+
 def calculateF1score(precision,recall):
 	return 2 * (precision * recall) / (precision + recall)
+
+def calculateAveragePrecision(index,precisionList,relevanceList):
+	''' relevanceList is a binary list
+	'''
+	return sum(precisionList[i] for i in range(index) if relevanceList[i] == 1)/sum(relevanceList)
+
+
+def calculateMAP(averagePrecisionList):
+	return numpy.mean(averagePrecisionList)
+
 
 
 
@@ -72,31 +98,24 @@ for file in files.filenames:
 
 
 
-
+# Saving summaries
 for fileName in scoreFileSentences.keys():
-	maxScores = getNthMaxScores(5,allFileScores[fileName])
 	
-	lineScores = scoreFileSentences[fileName]
-	selectedLines = [] 
-	for lineNumber in lineScores.keys():
-		lineMaxScore = max(lineScores[lineNumber])
-		if lineMaxScore  in maxScores:
-			maxScores.remove(lineMaxScore)
-			if lineNumber not in selectedLines:
-				selectedLines.append(lineNumber)
+	selectedLines = selectNthBestLines(5,fileName,allFileScores,scoreFileSentences)
 
-	sortedLines = sorted(selectedLines)
 	filePath = pathFiles+"Text/"+fileName + '.out'
 	output = open(filePath, 'w', encoding=enc)
 
-	for lineNumber in sortedLines:
+	for lineNumber in selectedLines:
 		#needs new line so nltk can split sentences correctly
 		output.write(sentences[fileName][lineNumber]+"\n")
 	
 	output.close()
 
-# Here should be the precision, recall and F1 and MA Pcalculations
+# Precision, recall, F1 score and MAP calculations 
 
+precisionList = []
+relevanceList = []
 for fileName in scoreFileSentences.keys():
 	output = open(pathFiles+"Text/"+fileName+".out",'r', encoding=enc)
 	outputResult = output.read()
@@ -105,6 +124,9 @@ for fileName in scoreFileSentences.keys():
 
 	expected = open(pathExpectedFiles+"Ext-"+fileName+".txt",'r', encoding=enc)
 	expectedResult = expected.readlines()
+	
+
+	#removing newlines for better results
 	expectedSentences = []
 	for line in expectedResult:
 		expectedSentences += [line[:-1]]
@@ -114,12 +136,24 @@ for fileName in scoreFileSentences.keys():
 	
 	recallResult = recall(expectedSentences,outputSentences)
 	precisionResult = precision(expectedSentences,outputSentences)
-	print("#")
-	print("file: ",fileName)
-	print("recall: ",recallResult)
-	print("precision: ",precisionResult)
+	precisionList+=[precisionResult]
+
+	#Not sure if relevanceList is necessary here
+	if precisionResult != 0:
+		relevanceList+=[1]
+	else:
+		relevanceList+=[0]
+
+	resultString = "File: "+fileName+" Recall: "+str(recallResult)+" Precision: "+str(precisionResult)
 	if recallResult != 0 and precisionResult != 0:
-		print("F1 Score: ",calculateF1score(precisionResult,recallResult))
+		f1Score = calculateF1score(precisionResult,recallResult)
+		resultString += " F1 Score: "+str(f1Score)
+	
+	print(resultString)
+	
+
+avgPrecision = calculateAveragePrecision(len(precisionList),precisionList,relevanceList)
+print("Average Precision: "+str(avgPrecision))
 
 #Clean Up
 os.system("rm "+pathFiles+"Text/*.out")
