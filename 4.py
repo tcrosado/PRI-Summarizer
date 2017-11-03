@@ -3,6 +3,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.datasets import load_files
 import operator
+import os
 from metrics import *
 
 enc_PT = 'ISO-8859-15'
@@ -63,9 +64,20 @@ for filePath in files.filenames:
 	with open(outputMmrPath, 'w', encoding=enc) as file:
 		file.write("\n".join(selectedSentences))
 
+	fileName = getFilename(filePath)
 	expectedResultPath = "../idealTeMario/Ext-"+getFilename(filePath)+".txt"
-	getMetrics(getFilename(filePath),outputMmrPath,expectedResultPath,enc)
+
+	print("MMR approach")
+	getMetrics(fileName,outputMmrPath,expectedResultPath,enc)
+
+
+	# First 5 sentences simple approach
+	outputFirstPath = filePath[:-4]+"F.out"
+	with open(outputFirstPath, 'w', encoding=enc) as file:
+		file.write("\n".join(sentences[:5]))
+	print("First 5 approach")
+	getMetrics(fileName,outputFirstPath,expectedResultPath,enc)
 
 
 #Clean Up
-os.system("rm "+pathFiles+"Text/*.out")
+os.system("rm ../TeMario/Text/*.out")
