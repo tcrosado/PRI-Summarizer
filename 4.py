@@ -65,3 +65,7 @@ for filePath in files.filenames:
 
 	expectedResultPath = "../idealTeMario/Ext-"+getFilename(filePath)+".txt"
 	getMetrics(getFilename(filePath),outputMmrPath,expectedResultPath,enc)
+
+
+#Clean Up
+os.system("rm "+pathFiles+"Text/*.out")

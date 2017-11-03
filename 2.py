@@ -116,7 +116,7 @@ for filePath in files.filenames:
 
     #Sentence based approach
     vectorSpace = TfidfVectorizer(encoding=enc)
-    summarySentenceBased = getSenteceBasedSummary(3,vectorSpace,filePath,enc)
+    summarySentenceBased = getSenteceBasedSummary(5,vectorSpace,filePath,enc)
 
     # Exporting Sentence based results to file
     outputSenPath = getOutputFilePath(fileName+"S")
