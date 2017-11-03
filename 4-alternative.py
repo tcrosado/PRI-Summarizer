@@ -3,7 +3,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.datasets import load_files
 import operator
-
+from metrics import *
 
 enc_PT = 'ISO-8859-15'
 enc_US = 'UTF-8'
@@ -24,9 +24,9 @@ number=0
 
 files = load_files('../TeMario/')
 
-for fileName in files.filenames:
+for filePath in files.filenames:
 
-	file = open(fileName, 'r', encoding=enc)
+	file = open(filePath, 'r', encoding=enc)
 
 	document = file.read()
 	# Turn into sentences
@@ -42,8 +42,6 @@ for fileName in files.filenames:
 	# This should be for all files ?
 	resultDocument = vectorSpace.fit_transform([document])
 
-
-	#FIXME Has problems parsing first sentence
 
 	lamb = 0.7
 	summarySize = 5
@@ -62,5 +60,13 @@ for fileName in files.filenames:
 	#while select line != max
 	#run MMR
 	#max score and select line
-	print("File:",fileName)
-	print(selectedSentences)
+	#print("File:",fileName)
+	#print(selectedSentences)
+
+	# Exporting MMR based results to file
+	outputMmrPath = filePath[:-4]+"MMR.out"
+	with open(outputMmrPath, 'w', encoding=enc) as file:
+		file.write("\n".join(selectedSentences))
+
+	expectedResultPath = "../idealTeMario/Ext-"+getFilename(filePath)+".txt"
+	getMetrics(getFilename(filePath),outputMmrPath,expectedResultPath,enc)
