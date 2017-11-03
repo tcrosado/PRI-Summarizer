@@ -43,12 +43,10 @@ def getMetrics(fileName,resultPath,expectedPath,enc):
 
     recallResult = recall(expectedSentences,outputSentences)
     precisionResult = precision(expectedSentences,outputSentences)
+    f1Score = calculateF1score(precisionResult,recallResult) if recallResult != 0 and precisionResult != 0 else 0
 
-    resultString = "File: "+fileName+" Recall: "+str(recallResult)+" Precision: "+str(precisionResult)
-    if recallResult != 0 and precisionResult != 0:
-        f1Score = calculateF1score(precisionResult,recallResult)
-        resultString += " F1 Score: "+str(f1Score)
+    resultString = "File: "+fileName+" Recall: "+str(recallResult)+" Precision: "+str(precisionResult)+" F1 Score: "+str(f1Score)
 
     print(resultString)
 
-    return {"recall" : recallResult,"precision" : precisionResult,"relevance": 1 if precisionResult!=0 else 0}
+    return {"recall" : recallResult,"precision" : precisionResult,"relevance": 1 if precisionResult!=0 else 0,"f1": f1Score }
