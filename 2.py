@@ -147,7 +147,7 @@ def getMetrics(resultPath,expectedPath):
     if recallResult != 0 and precisionResult != 0:
         f1Score = calculateF1score(precisionResult,recallResult)
         resultString += " F1 Score: "+str(f1Score)
-
+    
     print(resultString)
 
     return {"recall" : recallResult,"precision" : precisionResult,"relevance": 1 if precisionResult!=0 else 0}
@@ -176,7 +176,7 @@ for filePath in files.filenames:
     # Exporting Sentence based results to file
     outputSenPath = getOutputFilePath(fileName+"S")
     with open(outputSenPath, 'w', encoding=enc) as file:
-        file.write("".join(summarySentenceBased))
+        file.write("\n".join(summarySentenceBased))
 
 
 
