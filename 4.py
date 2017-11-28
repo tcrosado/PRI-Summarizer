@@ -1,23 +1,35 @@
 from urllib.request import urlopen
 import time
+import feedparser			#lib alternativa
 
-
+feeds=['http://rss.nytimes.com/services/xml/rss/nyt/World.xml','http://rss.cnn.com/rss/edition_world.rss','http://feeds.washingtonpost.com/rss/world','http://www.latimes.com/world/rss2.0.xml']
 
 def openPage(url):
 	site = urlopen(url)
-	content = site.read()
-
+	content = site.read().decode('utf-8')
 	site.close()
 	return content
 
 
 
 def getRssFeeds():
-	feeds=['http://www.nytimes.com/services/xml/rss/index.html','http://edition.cnn.com/services/rss/','https://www.washingtonpost.com/rss-feeds/2014/08/04/ab6f109a-1bf7-11e4-ae54-0cfe1f974f8a_story.html','http://www.latimes.com/local/la-los-angeles-times-rss-feeds-20140507-htmlstory.html']
+	
 	for i in feeds:
 		feed=openPage(i)
-		
 		time.sleep(1) 				#waits 1 second betweeen each request its nedded
 		print(feed)
 
-getRssFeeds()
+#getRssFeeds()
+
+
+
+#############################################lib alternative and better than the one from the teacher####################################################################
+def tryer ():
+	for i in feeds:
+		feed=feedparser.parse(i)
+		print(feed)
+		time.sleep(1) 	
+
+
+tryer()
+#####################################################################################################################
