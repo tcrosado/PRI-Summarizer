@@ -16,3 +16,4 @@ writer = ix.writer()
 with open('pri_cfc.txt') as f:
 	for line in f:
 		writer.add_document(id=line.split()[0], content=line.split(' ', 1)[1])
+
