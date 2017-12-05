@@ -10,6 +10,9 @@ enc = enc_PT
 
 pathFiles = "../../TeMario/"
 
+files = load_files(pathFiles)
+
+fileName = files.filenames[0]
 
 def getSentencesFromFile(filePath):
     file = open(filePath, 'r', encoding=enc)
@@ -50,13 +53,6 @@ def calcPageRankWPrior(nodeName,pageRank,graph,damping,priorFunc,weightFunc):
 
     return pr
 
-
-
-
-files = load_files(pathFiles)
-
-fileName = files.filenames[0]
-
 #Creating a sentence list
 sentList = getSentencesFromFile(fileName)
 
@@ -67,20 +63,35 @@ def getConsineSimFromSent(sentence1,sentence2):
         j = sentList.index(sentence2)
         return cosine_similarity(resultSentences[i],resultSentences[j])
 
+def getCosineSimSentenceDocument(sentence):
+    #FIXME: Not working
+    vectorSpace = TfidfVectorizer(encoding=enc)
+    f = open(fileName, 'r', encoding=enc)
+    document = f.read()
+    resultDoc = vectorSpace.fit_transform(document)
+    resultSentence = vectorSpace.transform(sentList)
+    i = sentList.index(sentence)
+    return cosine_similarity(resultSentence[i],resultDoc)
 
-#Creating graph
+
+
+def createGraph(sentenceList,treshold):
+    graph = Graph()
+
+    for i in range(len(sentenceList)):
+        for j in range(i+1,len(sentenceList)):
+            vectorSpace = TfidfVectorizer(encoding=enc)
+            resultSentences = vectorSpace.fit_transform(sentenceList)
+
+            sim = cosine_similarity(resultSentences[i],resultSentences[j])
+
+            if(sim>=treshold):
+                graph.addBiEdge(sentList[i],sentList[j])
+    return graph
+
+
 treshold = 0.2
-graph = Graph()
-
-for i in range(len(sentList)):
-    for j in range(i+1,len(sentList)):
-        vectorSpace = TfidfVectorizer(encoding=enc)
-        resultSentences = vectorSpace.fit_transform(sentList)
-
-        sim = cosine_similarity(resultSentences[i],resultSentences[j])
-
-        if(sim>=treshold):
-            graph.addBiEdge(sentList[i],sentList[j])
+graph = createGraph(sentList,treshold)
 
 pageRank = dict()
 
@@ -90,6 +101,8 @@ for sentence in sentList:
 for sentence in sentList:
     pr =calcPageRankWPrior(sentence,pageRank,graph,0.15,
         sentList.index,getConsineSimFromSent)
+    #pr =calcPageRankWPrior(sentence,pageRank,graph,0.15,
+     #   getCosineSimSentenceDocument,getConsineSimFromSent)
 
     pageRank[sentence] = pr if pr==0 else pr[0][0]
 
