@@ -15,7 +15,7 @@ def createfiles(feed,name,content):
 	f = open('./toParse/'+result+'/'+name,'w')
 	f.write(content)
 	f.close()
-
+###################################################################
 def fullNews(link,feed):
 
 	g = Goose()
