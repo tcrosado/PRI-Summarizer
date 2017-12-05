@@ -13,5 +13,22 @@ class Graph(object):
 		else:
 			self.graph[node1] = [node2]
 
+		if(node2 not in self.graph.keys()):
+			self.graph[node2] = []
+
+	def getReferedLinks(self,node):
+		if(node in self.graph.keys()):
+			return self.graph[node]
+		else:
+			return []
+
+	def getReferingLinks(self,node):
+		result = []
+		if(node in self.graph.keys()):
+			for nodeRef in self.graph.keys():
+				if(node in self.graph[nodeRef]):
+					result.append(nodeRef)
+		return result
+
 	def __str__(self):
 		return str(self.graph)
