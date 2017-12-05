@@ -3,6 +3,10 @@ import os
 import feedparser			#lib alternativa
 import re
 from goose3 import Goose
+####
+from dominate import document
+from dominate.tags import *
+####
 
 feeds=['http://rss.nytimes.com/services/xml/rss/nyt/World.xml','http://rss.cnn.com/rss/edition_world.rss','http://feeds.washingtonpost.com/rss/world','http://www.latimes.com/world/rss2.0.xml']
 
@@ -25,6 +29,17 @@ def fullNews(link,feed):
 	except:
 		print('error')
 	
+########################## Generate HTML ############################
+def generateHtml():
+
+	with document(title='News Resume') as doc:
+	    h1('Feed')
+	    with div():
+        	attr(cls='pretty')
+        	p()
+
+	with open('gallery.html', 'w') as f:
+	    f.write(doc.render())
 
 #############################################lib alternative and better than the one from the teacher####################################################################
 
