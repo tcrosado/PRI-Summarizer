@@ -10,7 +10,7 @@ enc = enc_US
 
 def calcPageRank(docOut,damping,iterNr):
     pr = dict()
-    
+
     #setting initial pageRank
     docIds = docOut.keys()
     for docId in docIds:
@@ -35,8 +35,8 @@ sentList = []
 with open('pri_cfc.txt') as f:
 	line = f.readline() #FIXME testing with just 1 doc
 	docId = int(line.split()[0])
-	sentences = sent_tokenize(line.split(' ', 1)[1].lower()) 
-	
+	sentences = sent_tokenize(line.split(' ', 1)[1].lower())
+
 	for sentence in sentences:
 		sentList.append(sentence)
 
@@ -48,11 +48,11 @@ graph = Graph()
 for i in range(len(sentList)):
 	for j in range(i+1,len(sentList)):
 		vectorSpace = TfidfVectorizer(encoding=enc)
-		resultSentences = vectorSpace.fit_transform(sentList)	
+		resultSentences = vectorSpace.fit_transform(sentList)
 		sim = cosine_similarity(resultSentences[i],resultSentences[j])
 		if(sim>=treshold):
-			graph.addEdge(sentList[i],sentList[j])
-		
+			graph.addBiEdge(sentList[i],sentList[j])
+
 result = calcPageRank(graph.graph,0.15,10)
 
 sortedResult = sorted(result, key=result.__getitem__)
