@@ -68,7 +68,37 @@ def calcPageRankWPrior(nodeName,pageRank,graph,damping,priorFunc,weightFunc):
 
     return pr
 
+def getNounPhrases(sentences):
+    nounPhrases = []
+    words = [word_tokenize(sentence) for sentence in sentences]
+    taggedWords = [pos_tag(word) for word in words]
+    for sent in taggedWords:
+        grammar = r"""
+        NBAR:
+            {<NN.*|JJ>*<NN.*>}  # Nouns and Adjectives, terminated with Nouns
 
+        NP:
+            {<NBAR>}
+            {<NBAR><IN><NBAR>}"""
+        parser = RegexpParser(grammar)
+        sentence = parser.parse(sent)
+
+        grammar = "NP: {<NN>+}"
+        parser = RegexpParser(grammar)
+        classTree = parser.parse(sentence)
+
+        flatTree = []
+        for leaf in classTree:
+            flatTree.append(leaf)
+
+        for leaf in flatTree:
+            if isinstance(leaf,Tree) and leaf.label() == 'NP':
+                nounPhrase= ''
+                for (word,cls) in leaf.leaves():
+                    nounPhrase+=" "+word
+                nounPhrases.append(nounPhrase)
+
+    return nounPhrases
 
 
 
@@ -87,37 +117,6 @@ for filePath in files.filenames:
 
     def getNounPhraseBasedWeight(sentence1,sentence2):
         # weight = number of noun phrases shared between the sentences
-        def getNounPhrases(sentences):
-            nounPhrases = []
-            words = [word_tokenize(sentence) for sentence in sentences]
-            taggedWords = [pos_tag(word) for word in words]
-            for sent in taggedWords:
-                grammar = r"""
-                NBAR:
-                    {<NN.*|JJ>*<NN.*>}  # Nouns and Adjectives, terminated with Nouns
-
-                NP:
-                    {<NBAR>}
-                    {<NBAR><IN><NBAR>}"""
-                parser = RegexpParser(grammar)
-                sentence = parser.parse(sent)
-
-                grammar = "NP: {<NN>+}"
-                parser = RegexpParser(grammar)
-                classTree = parser.parse(sentence)
-
-                flatTree = []
-                for leaf in classTree:
-                    flatTree.append(leaf)
-
-                for leaf in flatTree:
-                    if isinstance(leaf,Tree) and leaf.label() == 'NP':
-                        nounPhrase= ''
-                        for (word,cls) in leaf.leaves():
-                            nounPhrase+=" "+word
-                        nounPhrases.append(nounPhrase)
-
-            return nounPhrases
 
         npSentence1 = getNounPhrases([sentence1])
         npSentence2 = getNounPhrases([sentence2])
@@ -184,13 +183,13 @@ for filePath in files.filenames:
         pageRank[sentence] = pr
 
     summaries += sorted(pageRank, key=pageRank.__getitem__)[:5]
+    print(summaries)
+    #resultFilePath = getOutputFilePath(fileName+"D")
+    #expectedFilePath = getExpectedFilePath(fileName)
+    #with open(resultFilePath,"w", encoding = enc) as f:
+    #    f.write("\n".join(summaries))
 
-    resultFilePath = getOutputFilePath(fileName+"D")
-    expectedFilePath = getExpectedFilePath(fileName)
-    with open(resultFilePath,"w", encoding = enc) as f:
-        f.write("\n".join(summaries))
-
-    getMetrics(fileName,resultFilePath,expectedFilePath,enc)
+    #getMetrics(fileName,resultFilePath,expectedFilePath,enc)
 
 
 
