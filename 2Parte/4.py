@@ -31,16 +31,18 @@ def fullNews(link,feed):
 	
 ########################## Generate HTML ############################
 def generateHtml():
-
+	
 	with document(title='News Resume') as doc:
-	    h1('Feed')
-	    with div():
-        	attr(cls='pretty')
-        	p()
+		with doc.head:
+			link(rel='stylesheet', href='parsed.css')
+		h1('Feed')
+		with article(cls='pretty'):
+			section().add(h1(),p())
 
 	with open('gallery.html', 'w') as f:
 	    f.write(doc.render())
 
+generateHtml()
 #############################################lib alternative and better than the one from the teacher####################################################################
 
 def tryer ():
@@ -50,7 +52,7 @@ def tryer ():
 			fullNews(o['link'],i)
 		time.sleep(1) 
 
-tryer()
+#tryer()
 
 
 
