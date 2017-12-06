@@ -141,6 +141,9 @@ for filePath in files.filenames:
         i = sentList.index(sentence)
         return cosine_similarity(resultSentence[i],resultDoc)
 
+    def getNounPhraseBasedProbability(sentence):
+        return
+
 
     #################################################################
 
