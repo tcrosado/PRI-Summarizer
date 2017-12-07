@@ -69,6 +69,7 @@ def calcPageRankWPrior(nodeName,pageRank,graph,damping,priorFunc,weightFunc):
     return pr
 
 def getNounPhrases(sentences):
+    # Should remove stopwords
     nounPhrases = []
     words = [word_tokenize(sentence) for sentence in sentences]
     taggedWords = [pos_tag(word) for word in words]
@@ -100,6 +101,15 @@ def getNounPhrases(sentences):
 
     return nounPhrases
 
+def countFrequence(sentences):
+    freq = dict()
+    for sentence in sentences:
+        if sentence in freq:
+            freq[sentence]+=1
+        else:
+            freq[sentence]=1
+    return freq
+        
 
 
 for filePath in files.filenames:
@@ -107,6 +117,19 @@ for filePath in files.filenames:
     #Creating a sentence list
     sentList = getSentencesFromFile(filePath)
 
+    #Getting noun list for prior prob calculator
+    words = [word_tokenize(sentenceDoc) for sentenceDoc in sentList]
+    taggedWords = [pos_tag(word) for word in words]
+    nouns = []
+    for sent in taggedWords:
+        for word,pos in sent:
+            if(pos == 'NN' or pos == 'NNP' or pos == 'NNS' or pos == 'NNPS'):
+                nouns.append(word)
+
+    #Nouns with more relevance at last so have more weight (index)
+    nouns = tuple(sorted(countFrequence(nouns)))
+
+    
     # ################# Weight assignment ################
     def getConsineSimFromSent(sentence1,sentence2):
             vectorSpace = TfidfVectorizer(encoding=enc)
@@ -132,7 +155,7 @@ for filePath in files.filenames:
 
     # ################ Prior Probability assignment ###############
     def getCosineSimSentenceDocument(sentence):
-
+        ''' sentence -> str '''
         vectorSpace = TfidfVectorizer(encoding=enc)
         f = open(filePath, 'r', encoding=enc)
         document = f.read()
@@ -141,8 +164,16 @@ for filePath in files.filenames:
         i = sentList.index(sentence)
         return cosine_similarity(resultSentence[i],resultDoc)
 
-    def getNounPhraseBasedProbability(sentence):
-        return
+    def getNounBasedProbability(sentence):
+        ''' sentence -> str '''
+        
+        wordsSentence = word_tokenize(sentence) 
+
+        weight = 1
+        for word in wordsSentence:
+            if word in nouns:
+                weight += nouns.index(word)+1
+        return weight
 
 
     #################################################################
@@ -179,12 +210,14 @@ for filePath in files.filenames:
 
         #pr =calcPageRankWPrior(sentence,pageRank,graph,0.15,
         #   getCosineSimSentenceDocument,getConsineSimFromSent)
-
+        #pr =calcPageRankWPrior(sentence,pageRank,graph,0.15,
+        #  getCosineSimSentenceDocument,getNounPhraseBasedWeight)
         pr =calcPageRankWPrior(sentence,pageRank,graph,0.15,
-           getCosineSimSentenceDocument,getNounPhraseBasedWeight)
+           getNounBasedProbability,getNounPhraseBasedWeight)
 
         pageRank[sentence] = pr
 
+    #FIXME: Its joining everything into summaries
     summaries += sorted(pageRank, key=pageRank.__getitem__)[:5]
     print(summaries)
     #resultFilePath = getOutputFilePath(fileName+"D")
