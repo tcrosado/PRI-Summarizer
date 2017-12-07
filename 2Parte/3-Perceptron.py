@@ -174,7 +174,29 @@ def perceptron_train(files, summary):
 #----------------------------------------------END OF TRAINING--------------------------------------------------#	
 
 
+def check_accuracy(file, expected, result):
+	#print ("check")
+	accuracy = 100
+	for f in expected.filenames:
+		name = getFilename(f)
+		if (file[1] in name[1]):
+			fp = codecs.open(f, 'r', encoding = enc, errors = 'ignore')
+			document = fp.read()
+
+			sentences = join_doc(document)
+
+			#print (sentences)
+			for s in result:
+				#print (s)
+				if s[1] not in sentences:
+					accuracy -= 20
+
+			return accuracy
+
+
 def run(files, summary):
+
+	result_summary=dict()
 	ppt = perceptron_train(files, summary)
 
 	all_sentences = dict()
@@ -195,35 +217,47 @@ def run(files, summary):
 		position[fileName] = positionDocument(document)
 
 		#print (position)
+		stcs = []
+		'''
+		for item in all_sentences:
+			for i in range(len(all_sentences[item])):
+				#print (all_sentences[item])
+				stcs.append(all_sentences[item][i])
+		'''
 
-	stcs = []
-	for item in all_sentences:
-		for i in range(len(all_sentences[item])):
-			#print (all_sentences[item])
-			stcs.append(all_sentences[item][i])
+		#print (len(stcs))
 
-	#print (len(stcs))
+		matrix = []
+		for i in range(len(all_sentences[fileName])):
+			matrix.append([scoreFileSentences[fileName][i], position[fileName][i]])
+			stcs.append(all_sentences[fileName][i])
 
-	matrix = []
-	for doc in scoreFileSentences:
-		for i in range(len(all_sentences[doc])):
-			matrix.append([scoreFileSentences[doc][i], position[doc][i]])
+		#print (matrix)
 
-	#print (matrix)
-
-	testing_matrix = numpy.array(matrix)
-	#print (testing_matrix)
-	results = ppt.decision_function(testing_matrix)
-	#print (results.shape)
+		testing_matrix = numpy.array(matrix)
+		#print (testing_matrix)
+		results = ppt.decision_function(testing_matrix)
+		#print (results.shape)
 
 
-	result_dict = {}
-	for i in range(0,len(results)):
+		result_dict = {}
+		for i in range(0,len(results)):
 			result_dict[stcs[i]] = results[i]
 
-	sorted_results = sorted(result_dict.items(), key=operator.itemgetter(1))
+		sorted_results = sorted(result_dict.items(), key=operator.itemgetter(1))
 
-	for item in sorted_results[-5:]:
-		print (item[0])
+		result_summary[fileName] = sorted_results[-5:]
+
+		for s in result_summary[fileName]:
+			print (s[0])
+
+		acc = dict()
+
+		acc[fileName] = check_accuracy(fileName, summary, result_summary[fileName])
+
+	#print (acc)
+
+
 
 run(files, summary)
+
