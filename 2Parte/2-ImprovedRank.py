@@ -109,7 +109,7 @@ def countFrequence(sentences):
         else:
             freq[sentence]=1
     return freq
-        
+
 
 
 for filePath in files.filenames:
@@ -129,7 +129,7 @@ for filePath in files.filenames:
     #Nouns with more relevance at last so have more weight (index)
     nouns = tuple(sorted(countFrequence(nouns)))
 
-    
+
     # ################# Weight assignment ################
     def getConsineSimFromSent(sentence1,sentence2):
             vectorSpace = TfidfVectorizer(encoding=enc)
@@ -151,7 +151,12 @@ for filePath in files.filenames:
 
         return weight
 
+    def getNaiveBayesWeight(sentence1,sentence2):
+        probSent1 = getCosineSimSentenceDocument(sentence1)
+        probSent2 = getCosineSimSentenceDocument(sentence2)
+        probS1GivenS2 = getConsineSimFromSent(sentence1,sentence2)
 
+        return probS1GivenS2 * probSent1/probSent2
 
     # ################ Prior Probability assignment ###############
     def getCosineSimSentenceDocument(sentence):
@@ -166,8 +171,8 @@ for filePath in files.filenames:
 
     def getNounBasedProbability(sentence):
         ''' sentence -> str '''
-        
-        wordsSentence = word_tokenize(sentence) 
+
+        wordsSentence = word_tokenize(sentence)
 
         weight = 1
         for word in wordsSentence:
@@ -212,8 +217,10 @@ for filePath in files.filenames:
         #   getCosineSimSentenceDocument,getConsineSimFromSent)
         #pr =calcPageRankWPrior(sentence,pageRank,graph,0.15,
         #  getCosineSimSentenceDocument,getNounPhraseBasedWeight)
+        #pr =calcPageRankWPrior(sentence,pageRank,graph,0.15,
+        #   getNounBasedProbability,getNounPhraseBasedWeight)
         pr =calcPageRankWPrior(sentence,pageRank,graph,0.15,
-           getNounBasedProbability,getNounPhraseBasedWeight)
+           getNounBasedProbability,getNaiveBayesWeight)
 
         pageRank[sentence] = pr
 
